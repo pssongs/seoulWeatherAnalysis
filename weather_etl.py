@@ -239,5 +239,5 @@ def main():
         except Exception as e:
             print(f"Failed to process {city}: {e}")
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()
