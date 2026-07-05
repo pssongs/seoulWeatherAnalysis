@@ -22,25 +22,34 @@ config.py (loads environment variables and application settings)
 ## Set up Instructions
 
 1. Clone the repository
+    ```text
     git clone <your-repo-url>
     cd <your-project-folder>
+    ```
 2. Create a virtual environment (recommended)
+    ```text
     python -m venv venv
     source venv/bin/activate   # Mac/Linux
     venv\Scripts\activate      # Windows
-3. Install dependencies
+    ```
+4. Install dependencies
+    ```text
     pip install -r requirements.txt
-4. Set up environment variables
+    ```
+5. Set up environment variables
     Create a `.env` file in the root directory:
-
+    ```text
     OPENWEATHER_API_KEY=your_api_key_here
     DATABASE_URL=postgresql://user:password@host:port/dbname?sslmode=require
+    ```
 
     Do not commit `.env` files to version control.
-5. Database setup
+6. Database setup
     - Ensure your PostgreSQL database is running and accessible
-6. Run the ETL pipeline
-    - python weather_etl.py
+7. Run the ETL pipeline
+   ```text
+   python weather_etl.py
+   ```
 
 ## Project Structure
 
