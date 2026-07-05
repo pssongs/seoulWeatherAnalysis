@@ -1,4 +1,4 @@
-import requests
+import requests, logging, time
 from sqlalchemy import text, create_engine
 from datetime import datetime, UTC
 from sql import create_cities_table, insert_city_sql, get_city_id, get_weather_id, create_observation_table, insert_observation_sql
@@ -18,15 +18,33 @@ def create_db_engine():
 
 def get_weather(openweather_id: int) -> dict:
     """Get request to the API to receive the weather in specificed city"""
+
+    MAX_RETRIES = 3
+    RETRY_DELAY = 2
+
     params = {
     "id": openweather_id,
     "appid": OPENWEATHER_API_KEY,
     "units": "metric"
     }
 
-    response = requests.get(BASE_URL, params=params)
-    response.raise_for_status()
-    return response.json()
+    for attempt in range(1,MAX_RETRIES+1):
+        try: 
+            response = requests.get(BASE_URL,params=params, timeout=10)
+            response.raise_for_status()
+
+            return response.json()
+        
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Attempt {attempt}/{MAX_RETRIES} failed for city {openweather_id}: {e}")
+            if attempt < 3:
+                time.sleep(RETRY_DELAY * attempt)
+            else: 
+                raise 
+
+            
+
+
 
 def get_weather_by_city_name(city: str) -> dict:
     """Get request to the API to receive the weather in specificed city"""
@@ -112,7 +130,7 @@ def get_openweather_ids(engine) -> list:
         return conn.execute(text(get_weather_id)).scalars().all()
     
 def main():
-    print("Starting ETL...")
+    logging.info("Starting ETL...")
     engine = create_db_engine()
 
     create_tables(engine)
@@ -125,16 +143,17 @@ def main():
             weather = get_weather(openweather_id)
 
             city_param = build_city_param(weather)
-
             city_id = get_or_create_city(engine,city_param)
-
+            city_name = weather["name"]
             observation_param = build_observation_param(weather, city_id)
 
             observation_id = insert_observation(engine,observation_param)
-
-            print(f"{openweather_id}: inserted observation {observation_id}")
+            if observation_id is None:
+                logging.info(f"{city_name}: Observation already exists. Skipping.")
+            else:    
+                logging.info(f"{city_name}: inserted observation {observation_id}")
         except Exception as e:
-            print(f"Failed to process {openweather_id}: {e}")
+            logging.error(f"Failed to process {openweather_id}: {e}")
 
 if __name__ == "__main__":
     main()

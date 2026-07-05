@@ -111,5 +111,7 @@ insert_observation_sql = """
     :snow_1h
     )
 
+    ON CONFLICT (city_id, observation_time)
+    DO NOTHING
     RETURNING observation_id
 """
